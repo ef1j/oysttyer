@@ -388,11 +388,12 @@ $SIGUSR1 ||= 30;
 $SIGUSR2 ||= 31;
 
 # wrap warning
+# EMF: edited out for faster start
 die(
 "** dude, what the hell kind of terminal can't handle a 5 character line?\n")
 	if ($wrap > 1 && $wrap < 5);
-print $stdout "** warning: prompts not wrapped for wrap < 70\n"
-	if ($wrap > 1 && $wrap < 70);
+#print $stdout "** warning: prompts not wrapped for wrap < 70\n"
+#	if ($wrap > 1 && $wrap < 70);
 
 # reject stupid combinations
 die("-largeimages and -origimages cannot be used together.\n")
@@ -861,8 +862,8 @@ if (!$dostream || $authtype eq 'basic' || !$ssl || $script || $anonymous || $syn
 			: ($synch) ? "(-synch)"
 			: ($authtype eq 'basic') ? "(no OAuth)"
 			: "(it's funkatron's fault)";
-		print $stdout
-	"-- Streaming API disabled $reason (oysttyer will use REST API only)\n";
+#		print $stdout
+#	"-- Streaming API disabled $reason (oysttyer will use REST API only)\n";
 		$dostream = 0;
 	} else {
 		print $stdout "-- Streaming API enabled\n";
@@ -971,15 +972,17 @@ EOF
 	};
 }
 
+# EMF: edited out version check
 # update check
-if ($vcheck && !length($status)) {
-	$vs = &updatecheck(0);
-} else {
-	$vs =
-"-- no version check performed (use /vcheck, or -vcheck to check on startup)\n"
-	unless ($script || $status);
-}
-print $stdout $vs; # and then again when client starts up
+#if ($vcheck && !length($status)) {
+#	$vs = &updatecheck(0);
+#} else {
+#	$vs =
+#"-- no version check performed (use /vcheck, or -vcheck to check on startup)\n"
+#	unless ($script || $status);
+#}
+# EMF: edited out for faster start
+#print $stdout $vs; # and then again when client starts up
 
 ## make sure we have all the authentication pieces we need for the
 ## chosen method (authtoken handles this for Basic Auth;
@@ -1595,12 +1598,6 @@ EOF
 	$e =~ s/\$\{([A-Z]+)\}/${$1}/eg; print $stdout $e;
 } else {
 	print <<"EOF";
-oysttyer ${oysttyer_VERSION}.${padded_patch_version} (c)2017 oysttyer organisation
-               (c)2007-2012 cameron kaiser
-all rights reserved. freeware under the floodgap free software license.
-http://www.floodgap.com/software/ffsl/
-
-tweet us http://twitter.com/oysttyer
 type /help for commands or /quit to quit.
 starting background monitoring process.
 
@@ -1621,7 +1618,7 @@ sleep 3 unless ($silent);
 if ($showusername) {
 	$promptprefix = $whoami ;
 } else {
-	$promptprefix = "oysttyer";
+	$promptprefix = ""; #EMF changed from oysttyer
 }
 
 sub defaultprompt {
@@ -2008,11 +2005,12 @@ print $stdout "*** invalid UTF-8: partial delete of a wide character?\n";
 		return 0;
 	}
 
+	# EMF EDIT OUT
 	# version check
-	if (m#^/v(ersion)?check$# || m#^/u(pdate)?check$#) {
-		print $stdout &updatecheck(1);
-		return 0;
-	}
+#	if (m#^/v(ersion)?check$# || m#^/u(pdate)?check$#) {
+#		print $stdout &updatecheck(1);
+#		return 0;
+#	}
 
 	# url shortener routine
 	if (($_ eq '/sh' || $_ eq '/short') && length($urlshort)) {
@@ -3119,6 +3117,7 @@ EOF
 	}
 
 #TODO
+#EMF: is this the like code? ***
 	if (s/^\/(likes)(\s+\+\d+)?\s*//) {
 		my $my_json_ref;
 		my $countmaybe = $2;
@@ -3355,6 +3354,7 @@ m#^/(un)?l(rt|retweet|i|ike)? ([zZ]?[a-zA-Z]?[0-9]+)$#) {
 		return 0;
 	}
 
+# EMF: Is this the reply code?
 	if (s#^/(v)?re(ply)? ([zZ]?[a-zA-Z]?[0-9]+) ## && length) {
 		my $mode = $1;
 		my $code = lc($3);
@@ -5630,7 +5630,9 @@ sub cordfav {
 	my $verb = shift;
 
 	my ($en, $em) = &central_cd_dispatch("id=$id", $interactive, $basefav);
-	print $stdout "-- like $verb for tweet id #${id}: \"$text\"\n"
+	# EMF: commented out text of liked tweet
+#	print $stdout "-- like $verb for tweet id #${id}: \"$text\"\n"
+	print $stdout "-- like $verb for tweet id #${id}\n"	    
 		if ($interactive && !$en);
 	print $stdout "*** (was the like already ${verb}?)\n"
 		if ($interactive && $en);
@@ -5720,6 +5722,10 @@ sub standardtweet {
 	my $h;
 	my $quote_badge = &descape("↑");
 
+	#what if I add the bell here? -EMF
+	#replaced $stdout with $streamout
+	print $streamout "\007";
+
 	# wordwrap really ruins our day here, thanks a lot, @augmentedfourth
 	# have to insinuate the ansi sequences after the string is wordwrapped
 
@@ -5746,7 +5752,7 @@ sub standardtweet {
 	$sn = "($ref->{'tag'}->{'payload'})$sn"
 		if (length($ref->{'tag'}->{'payload'}) &&
 			$ref->{'tag'}->{'type'} eq 'list');
-	$tweet = "<$sn> $tweet";
+	$tweet = "<$sn> $tweet"; # EMF: added bell code here originaly $sn is name
 
 	# twitter doesn't always do this right.
 	$h = $ref->{'retweet_count'}; $h += 0; #$h = "${h}+" if ($h >= 100);
@@ -5765,6 +5771,14 @@ sub standardtweet {
 	}
 
 	# pull it all together
+	# EMF: think here we can search for punch code and turn wrap on / off
+	# The current punch code is ppt:
+	# Original code follows commented out code.
+	# Don't need to skip wrap if use $tweet in @defaulthandle routine	
+#	unless($tweet =~ m{ppt:}) {
+#	    $tweet = &wwrap($tweet, ($wrapseq <= 1) ? ((&$prompt(1))[1]) : 0)
+#		if ($wrap); # remember to account for prompt length on #1
+#	}
 	$tweet = &wwrap($tweet, ($wrapseq <= 1) ? ((&$prompt(1))[1]) : 0)
 		if ($wrap); # remember to account for prompt length on #1
 	$tweet =~ s/^([^<]*)<([^>]+)>/${g}\1<${EM}\2${colour}>/
@@ -6213,8 +6227,22 @@ sub defaulthandle {
 			"${EM}${menu_select}>${OFF} " :
 			"${menu_select}> ")
 		: '';
-	print $streamout "\n" if ($doublespace);
-	print $streamout $menu_select . $dclass . $stweet;
+	print $streamout "\n\n" if ($doublespace);
+	# EMF: Here: start punch and strip out ppt: if received
+	# Note that wrap is skipped in function standardtweet
+	# use the original tweet text to punch
+	if($tweet =~ m/ppt:|:ppt:/) { # if tweet contains text "ppt:" or ":ppt:"
+	    print $streamout "\007\007"; #ring three bells for punch!
+	    print $streamout $menu_select . $dclass . "pptweet from @". $sn ." follows...\n";
+	    $tweet =~ s/ppt:|:ppt://i; #strip out ppt command
+	    $tweet =~ s/\@olivettitty//i; #strip out @olivettitty
+	    $tweet =~ s/^\s+//; #trim any leading spaces from remaining tweet
+	    #print with punch stop, start and pad with some null characters
+    	    print $streamout "\022\000\000\000\000\000" . $tweet . "\000\000\000\000\000\024\n\n"; 
+	}
+	else {
+	    print $streamout $menu_select . $dclass . $stweet;
+	}
 	&sendnotifies($tweet_ref, $class);
 	return 1;
 }
